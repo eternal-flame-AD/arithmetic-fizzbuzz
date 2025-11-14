@@ -4,9 +4,11 @@ Future of Computing challenge for FizzBuzz with "no conditionals, no booleans, n
 
 Contains both a Python truth table based solution and a Rust stright line "letter of the law" solution.
 
+Check out [the compiled assembly](code.S). No conditionals, no booleans, no comparison, no branches. (There is a `pcmpeqd` but that's just short hand for setting all bits to 1, not a real comparison.)
+
 # Demo
 
-Note: since there is no way to check for IO errors, the program will segfault if the output pipe is closed or cannot be written to.
+Note: since there is no way to check for IO errors and print a friendly message, the program will segfault if the output pipe is closed or cannot be written to.
 
 ```sh
 > cargo run --release | head -n 30
@@ -47,7 +49,11 @@ fish: Process 2934041, 'cargo' from job 1, 'cargo run --release | head -n 30' te
 # Benchmark
 
 ```sh
- target/release/arithmetic-fizzbuzz | pv -S --size 1g --line-mode >/dev/null
-1.07G 0:00:06 [ 156M/s] [===============>] 100%
-fish: Process 2937523, 'target/release/arithmetic-fizzbuzz' from job 1, 'target/release/arithmetic-fizzb…' terminated by signal SIGSEGV (Address boundary error)
+target/release/arithmetic-fizzbuzz | pv -S --size 1g --line-mode >/dev/null
+1.07G 0:00:07 [ 153M/s] [======>] 100%
+job 1, 'target/release/arithmetic-fizzb…' terminated by signal SIGSEGV (Address boundary error)
 ```
+
+# Similar projects
+
+[Combinatorics/Lambda calculus by Josh Moody](https://joshmoody.org/blog/programming-with-less-than-nothing/), more pure in theory but arithmetic solution is AFAIK the only way to run FizzBuzz without conditionals on real hardware.

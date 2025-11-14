@@ -85,55 +85,9 @@ fn fizzbuzz_arbitrary() -> ! {
     const COPY_LENGTH: usize = (MAX_DIGITS + 1).next_multiple_of(4);
     let mut state = [b'0'; MAX_DIGITS + 1 + COPY_LENGTH];
     state[MAX_DIGITS] = b'\n';
-    let mut start_digit = MAX_DIGITS as u8 - 1;
 
     let mut buffer = [b'0'; 16384];
     let mut buffer_ptr = 0;
-
-    macro_rules! write {
-        (fizz) => {
-            unsafe {
-                buffer
-                    .as_mut_ptr()
-                    .add(buffer_ptr)
-                    .cast::<u64>()
-                    .write_unaligned(u64::from_ne_bytes(*b"Fizz\n\0\0\0"));
-                buffer_ptr += 5;
-            }
-        };
-        (buzz) => {
-            unsafe {
-                buffer
-                    .as_mut_ptr()
-                    .add(buffer_ptr)
-                    .cast::<u64>()
-                    .write_unaligned(u64::from_ne_bytes(*b"Buzz\n\0\0\0"));
-                buffer_ptr += 5;
-            }
-        };
-        (fizzbuzz) => {
-            unsafe {
-                buffer
-                    .as_mut_ptr()
-                    .add(buffer_ptr)
-                    .cast::<u64>()
-                    .write_unaligned(u64::from_ne_bytes(*b"FizzBuzz"));
-                buffer_ptr += 8;
-                buffer[buffer_ptr] = b'\n';
-                buffer_ptr += 1;
-            }
-        };
-        (number) => {{
-            unsafe {
-                core::ptr::copy_nonoverlapping(
-                    state.as_ptr().add(start_digit as usize),
-                    buffer.as_mut_ptr().add(buffer_ptr),
-                    COPY_LENGTH,
-                );
-                buffer_ptr += (MAX_DIGITS as u8 - start_digit + 1) as usize;
-            }
-        }};
-    }
 
     #[inline(always)]
     fn increment_tenth(state: &mut [u8; MAX_DIGITS + 1 + COPY_LENGTH], start_digit: &mut u8) {
@@ -165,56 +119,102 @@ fn fizzbuzz_arbitrary() -> ! {
         *start_digit = unsafe { _mm_extract_epi16(start_digit_v, 0) as u8 };
     }
 
+    let mut start_digit = MAX_DIGITS as u8 - 1;
     loop {
+        macro_rules! push {
+            (fizz) => {
+                unsafe {
+                    buffer
+                        .as_mut_ptr()
+                        .add(buffer_ptr)
+                        .cast::<u64>()
+                        .write_unaligned(u64::from_ne_bytes(*b"Fizz\n\0\0\0"));
+                    buffer_ptr += 5;
+                }
+            };
+            (buzz) => {
+                unsafe {
+                    buffer
+                        .as_mut_ptr()
+                        .add(buffer_ptr)
+                        .cast::<u64>()
+                        .write_unaligned(u64::from_ne_bytes(*b"Buzz\n\0\0\0"));
+                    buffer_ptr += 5;
+                }
+            };
+            (fizzbuzz) => {
+                unsafe {
+                    buffer
+                        .as_mut_ptr()
+                        .add(buffer_ptr)
+                        .cast::<u64>()
+                        .write_unaligned(u64::from_ne_bytes(*b"FizzBuzz"));
+                    buffer_ptr += 8;
+                    buffer[buffer_ptr] = b'\n';
+                    buffer_ptr += 1;
+                }
+            };
+            (number) => {{
+                unsafe {
+                    core::ptr::copy_nonoverlapping(
+                        state.as_ptr().add(start_digit as usize),
+                        buffer.as_mut_ptr().add(buffer_ptr),
+                        COPY_LENGTH,
+                    );
+                    buffer_ptr += (MAX_DIGITS as u8 - start_digit + 1) as usize;
+                }
+            }};
+        }
+
         state[MAX_DIGITS - 1] = b'1';
-        write!(number); // 1
+        push!(number); // 1
         state[MAX_DIGITS - 1] = b'2';
-        write!(number); // 2
-        write!(fizz); // 3
+        push!(number); // 2
+        push!(fizz); // 3
         state[MAX_DIGITS - 1] = b'4';
-        write!(number); // 4
-        write!(buzz); // 5
-        write!(fizz); // 6
+        push!(number); // 4
+        push!(buzz); // 5
+        push!(fizz); // 6
         state[MAX_DIGITS - 1] = b'7';
-        write!(number); // 7
+        push!(number); // 7
         state[MAX_DIGITS - 1] = b'8';
-        write!(number); // 8
-        write!(fizz); // 9
+        push!(number); // 8
+        push!(fizz); // 9
         increment_tenth(&mut state, &mut start_digit);
-        write!(buzz); // 10
+        push!(buzz); // 10
         state[MAX_DIGITS - 1] = b'1';
-        write!(number); // 11
-        write!(fizz); // 12
+        push!(number); // 11
+        push!(fizz); // 12
         state[MAX_DIGITS - 1] = b'3';
-        write!(number); // 13
+        push!(number); // 13
         state[MAX_DIGITS - 1] = b'4';
-        write!(number); // 14
-        write!(fizzbuzz); // 15
+        push!(number); // 14
+        push!(fizzbuzz); // 15
         state[MAX_DIGITS - 1] = b'6';
-        write!(number); // 1
+        push!(number); // 1
         state[MAX_DIGITS - 1] = b'7';
-        write!(number); // 2
-        write!(fizz); // 3
+        push!(number); // 2
+        push!(fizz); // 3
         state[MAX_DIGITS - 1] = b'9';
-        write!(number); // 4
+        push!(number); // 4
         increment_tenth(&mut state, &mut start_digit);
-        write!(buzz); // 5
-        write!(fizz); // 6
+        push!(buzz); // 5
+        push!(fizz); // 6
         state[MAX_DIGITS - 1] = b'2';
-        write!(number); // 7
+        push!(number); // 7
         state[MAX_DIGITS - 1] = b'3';
-        write!(number); // 8
-        write!(fizz); // 9
-        write!(buzz); // 10
+        push!(number); // 8
+        push!(fizz); // 9
+        push!(buzz); // 10
         state[MAX_DIGITS - 1] = b'6';
-        write!(number); // 11
-        write!(fizz); // 12
+        push!(number); // 11
+        push!(fizz); // 12
         state[MAX_DIGITS - 1] = b'8';
-        write!(number); // 13
+        push!(number); // 13
         state[MAX_DIGITS - 1] = b'9';
-        write!(number); // 14
+        push!(number); // 14
         increment_tenth(&mut state, &mut start_digit);
-        write!(fizzbuzz); // 15
+        push!(fizzbuzz); // 15
 
         unsafe {
             write_stdout(core::slice::from_raw_parts(buffer.as_ptr(), buffer_ptr));
